@@ -1,0 +1,316 @@
+{
+	"info": {
+		"_postman_id": "92e8914c-a91e-496e-826b-4ac749b81657",
+		"name": "Tema 18 - Cristi Preda",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "60361394",
+		"_collection_link": "https://cristi-predacarp-4996893.postman.co/workspace/cristi-predacarp's-Workspace~047117e5-cb9e-421e-8203-f421d0052643/collection/60361394-92e8914c-a91e-496e-826b-4ac749b81657?action=share&source=collection_link&creator=60361394"
+	},
+	"item": [
+		{
+			"name": "Register",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"const uniqueId = Date.now() + \"_\" +\r",
+							"    Math.random().toString(36).slice(2, 8);\r",
+							"\r",
+							"pm.environment.set(\"email\", `qa_${uniqueId}@example.com`);\r",
+							"pm.environment.set(\"password\", `Qa!${uniqueId}Aa9`);\r",
+							"pm.environment.set(\"username\", `qa_${uniqueId}`);\r",
+							"pm.environment.set(\"firstName\", `Test${Date.now()}`);\r",
+							"pm.environment.set(\"lastName\", `User${Date.now()}`);"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"const registerResponse = pm.response.json();\r",
+							"\r",
+							"pm.test(\"Register - status 201\", function () {\r",
+							"    pm.response.to.have.status(201);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Inregistrare reusita si date primite\", function () {\r",
+							"    pm.expect(registerResponse.status).to.eql(\"success\");\r",
+							"    pm.expect(registerResponse.api_key).to.be.a(\"string\").and.not.empty;\r",
+							"    pm.expect(registerResponse.confirmation_token)\r",
+							"        .to.be.a(\"string\").and.not.empty;\r",
+							"    pm.expect(registerResponse.username).to.be.a(\"string\").and.not.empty;\r",
+							"    pm.expect(registerResponse.user_id).to.exist;\r",
+							"});\r",
+							"\r",
+							"if (pm.response.code === 201 &&\r",
+							"    registerResponse.status === \"success\") {\r",
+							"\r",
+							"    pm.environment.set(\"api_key\", registerResponse.api_key);\r",
+							"    pm.environment.set(\"confirmation_token\",\r",
+							"        registerResponse.confirmation_token);\r",
+							"    pm.environment.set(\"username\", registerResponse.username);\r",
+							"    pm.environment.set(\"user_id\", registerResponse.user_id);\r",
+							"}"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"email\": \"{{email}}\",\r\n  \"password\": \"{{password}}\",\r\n  \"first_name\": \"{{firstName}}\",\r\n  \"last_name\": \"{{lastName}}\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/user/register.php",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"user",
+						"register.php"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Confirm Email",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Confirmare - status 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Email confirmat cu succes\", function () {\r",
+							"    pm.expect(pm.response.json().status).to.eql(\"success\");\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/user/confirm_email.php?token={{confirmation_token}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"user",
+						"confirm_email.php"
+					],
+					"query": [
+						{
+							"key": "token",
+							"value": "{{confirmation_token}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Login:",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"const loginResponse = pm.response.json();\r",
+							"\r",
+							"pm.test(\"Login - status 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Login reusit si token primit\", function () {\r",
+							"    pm.expect(loginResponse.status).to.eql(\"success\");\r",
+							"    pm.expect(loginResponse.token).to.be.a(\"string\").and.not.empty;\r",
+							"    pm.expect(loginResponse.user.id).to.exist;\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Emailul corespunde contului creat\", function () {\r",
+							"    pm.expect(loginResponse.user.email)\r",
+							"        .to.eql(pm.environment.get(\"email\"));\r",
+							"});\r",
+							"\r",
+							"if (pm.response.code === 200 &&\r",
+							"    loginResponse.status === \"success\" &&\r",
+							"    loginResponse.token &&\r",
+							"    loginResponse.user &&\r",
+							"    loginResponse.user.id) {\r",
+							"\r",
+							"    pm.environment.set(\"token\", loginResponse.token);\r",
+							"    pm.environment.set(\"user_id\", loginResponse.user.id);\r",
+							"}"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"username\": \"{{username}}\",\r\n  \"password\": \"{{password}}\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/user/login.php",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"user",
+						"login.php"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Profile",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Profil - status 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Profil returnat cu succes\", function () {\r",
+							"    pm.expect(pm.response.json().status).to.eql(\"success\");\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Emailul profilului corespunde celui generat\", function () {\r",
+							"    const profileResponse = pm.response.json();\r",
+							"\r",
+							"    pm.expect(profileResponse.user.email)\r",
+							"        .to.eql(pm.environment.get(\"email\"));\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "",
+						"value": "",
+						"type": "text"
+					},
+					{
+						"key": "api_key",
+						"value": "{{api_key}}",
+						"type": "text",
+						"disabled": true
+					},
+					{
+						"key": "Authorization",
+						"value": "{{api_key}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/user/get_profile.php?user_id={{user_id}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"user",
+						"get_profile.php"
+					],
+					"query": [
+						{
+							"key": "X-API-Key",
+							"value": "{{api_key}}",
+							"disabled": true
+						},
+						{
+							"key": "user_id",
+							"value": "{{user_id}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete Profile",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Stergere - status 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Contul a fost sters cu succes\", function () {\r",
+							"    pm.expect(pm.response.json().status).to.eql(\"success\");\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/user/delete_profile.php",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"user",
+						"delete_profile.php"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
